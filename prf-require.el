@@ -93,6 +93,22 @@ We assume that package name is equal to PLUGIN"
     nil)
   )
 
+;; stolen from https://github.com/AndreaOrru/emacs.d/blob/master/lisp/require-package.el
+(defun prf/require-package (package &optional min-version no-refresh)
+  "Install given PACKAGE, optionally requiring MIN-VERSION.
+If NO-REFRESH is non-nil, the available package lists will not be
+re-downloaded in order to locate PACKAGE."
+  (if (package-installed-p package min-version)
+      t
+    (if (or (assoc package package-archive-contents) no-refresh)
+        (if (boundp 'package-selected-packages)
+					; Record this as a package the user installed explicitly:
+            (package-install package nil)
+          (package-install package))
+      (progn
+        (package-refresh-contents)
+        (require-package package min-version t)))))
+
 
 ;; stolen from https://github.com/purcell/emacs.d/blob/master/lisp/init-elpa.el
 (defun prf/install-package (package &optional min-version no-refresh noerror)
@@ -106,7 +122,7 @@ re-downloaded in order to locate PACKAGE."
 	    (package-install package)
 	  (progn
 	    (package-refresh-contents)
-	    (require-package package min-version t))))
+	    (prf/require-package package min-version t))))
     (error
      (prf/alert (format "Couldn't install package `%s': %S" package err) noerror)
      nil)
@@ -121,7 +137,7 @@ re-downloaded in order to locate PACKAGE."
  '(("(\\(prf\\/require-plugin\\|prf\\/install-package\\)\\_>[ 	']*\\(\\(?:\\sw\\|\\s_\\)+\\)?"
     (1 'font-lock-keyword-face)
     (2 font-lock-constant-face nil t))
- ))
+   ))
 
 
 ;; ------------------------------------------------------------------------
